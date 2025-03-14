@@ -2,6 +2,7 @@ package com.expungement.alloy.alloyrunner.service;
 
 import org.json.JSONObject;
 
+
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,19 +24,27 @@ public class AlloyService {
 	
 	@Value("${alloy.model.path}")
     private String modelPath = "";
+	
+	@Value("${alloy.model.path2}")
+    private String modelPath2 = "";
 
-    public JSONObject runAlloyModel(String predicate, String run) {
+    public JSONObject runAlloyModel(String predicate, String run, String type) {
         String modelContent;
         
         String userPredicate = "\n\npred userDefinedPredicate {\n"
         	    + predicate
         	    + "}\n"
         	    + run;
+        
         System.out.println(userPredicate);
 
         try {
             // Read the existing model from file
-            modelContent = new String(Files.readAllBytes(Paths.get(modelPath)));
+        	if(type.equals("forward")) {
+                modelContent = new String(Files.readAllBytes(Paths.get(modelPath)));
+        	}else {
+                modelContent = new String(Files.readAllBytes(Paths.get(modelPath2)));
+        	}
             // Append the user-defined predicate at the end of the model
             modelContent += userPredicate;
 
@@ -99,6 +108,7 @@ public class AlloyService {
         int stateIndex = 0;
 
         JSONObject finalExpungements = new JSONObject();
+        JSONObject finalViolations = new JSONObject();
 
         for (String state : states) {
             if (state.trim().isEmpty()) continue;
@@ -142,6 +152,14 @@ public class AlloyService {
             dateAttributes.put("withinSix", new JSONArray());
             dateAttributes.put("withinSeven", new JSONArray());
             jsonState.put("date_attributes", dateAttributes);
+            
+            // Extract and store violations as objects
+            storeViolationsAsObjects(state, "sec1_1bViolations", finalViolations, jsonState);
+            storeViolationsAsObjects(state, "sec1_1cViolations", finalViolations, jsonState);
+            storeViolationsAsObjects(state, "sec1d_2Violations", finalViolations, jsonState);
+            storeViolationsAsObjects(state, "sec1dTimingViolations", finalViolations, jsonState);
+            storeViolationsAsObjects(state, "backwardWaitingViolations", finalViolations, jsonState);
+            storeViolationsAsObjects(state, "forwardWaitingViolations", finalViolations, jsonState);
 
             jsonStates.put(jsonState);
 
@@ -162,6 +180,26 @@ public class AlloyService {
         JSONObject result = new JSONObject();
         result.put("success", true);
         result.put("expungements", finalExpungements);
+        result.put("violations", finalViolations); // Add the violations as objects
         return result;
+    }
+    
+    private void storeViolationsAsObjects(String state, String violationType, JSONObject finalViolations, JSONObject jsonState) {
+        Matcher matcher = Pattern.compile(violationType + "=\\{([^}]*)\\}").matcher(state);
+        if (matcher.find()) {
+            String[] violations = matcher.group(1).split(",\\s*");
+            JSONObject eventDate = jsonState.optJSONObject("event_date");
+            if (eventDate != null) {
+                JSONArray violationArray = new JSONArray();
+                for (String violation : violations) {
+                    if (eventDate.has(violation)) {
+                        JSONObject violationObject = new JSONObject();
+                        violationObject.put(violation, eventDate.getString(violation));
+                        violationArray.put(violationObject);
+                    }
+                }
+                finalViolations.put(violationType, violationArray);
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ public class AlloyRequest {
 	
 	private String predicate;
     private String run;
+    private String type;
 
     // Getters and setters
     public String getPredicate() {
@@ -14,8 +15,16 @@ public class AlloyRequest {
         this.predicate = predicate;
     }
 
+    public void setType(String type) {
+        this.type = type;
+    }
+    
     public String getRun() {
         return run;
+    }
+
+    public String getType() {
+        return type;
     }
 
     public void setRun(String run) {

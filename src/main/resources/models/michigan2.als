@@ -215,7 +215,7 @@ pred expungeable[c: Conviction] {
 pred expungeable[c: Conviction, x: Expungement] {
 	(expungeable[c])
 	and (not sec1dTimingViolation[c, x])
-	and (not forwardWaitingViolation[c])
+	and (not backwardWaitingViolation[c, x])
 }
 
 -- The constraints of MCL 780.621 hold in the model.

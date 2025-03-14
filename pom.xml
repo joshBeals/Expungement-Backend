@@ -38,8 +38,16 @@
 	        <groupId>org.alloytools</groupId>
 	        <artifactId>alloy</artifactId>
 	        <version>6.1.0</version>
-	        <scope>system</scope>
-	        <systemPath>${project.basedir}/src/main/resources/lib/org.alloytools.alloy.dist.jar</systemPath>
+	        <exclusions>
+	            <exclusion>
+	                <groupId>org.slf4j</groupId>
+	                <artifactId>slf4j-api</artifactId>
+	            </exclusion>
+	            <exclusion>
+	                <groupId>ch.qos.logback</groupId>
+	                <artifactId>logback-classic</artifactId>
+	            </exclusion>
+	        </exclusions>
 	    </dependency>
 	    
 		<dependency>
@@ -52,6 +60,12 @@
 		        </exclusion>
 		    </exclusions>
 		</dependency>
+		
+		<dependency>
+		    <groupId>org.slf4j</groupId>
+		    <artifactId>slf4j-simple</artifactId>
+		    <scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -62,5 +76,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>
