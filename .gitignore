@@ -199,3 +199,7 @@ README.html
 *.iml
 .idea
 .exercism
+
+# Allow JARs inside the lib/ folder
+!src/main/resources/lib/
+!src/main/resources/lib/*.jar
