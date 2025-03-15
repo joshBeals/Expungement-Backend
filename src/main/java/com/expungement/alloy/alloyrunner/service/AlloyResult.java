@@ -1,6 +1,7 @@
 package com.expungement.alloy.alloyrunner.service;
 
 import org.json.JSONObject;
+
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import edu.mit.csail.sdg.parser.CompUtil;
 import edu.mit.csail.sdg.translator.A4Options;
 import edu.mit.csail.sdg.translator.A4Solution;
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
+import kodkod.engine.satlab.SATFactory;
 
 import java.util.regex.*;
 import java.util.*;
@@ -45,7 +47,8 @@ public class AlloyResult {
 
             // Options for the Alloy solver
             A4Options options = new A4Options();
-            options.solver = A4Options.SatSolver.SAT4J;
+            options.solver = SATFactory.get("sat4j");
+
 
             // Execute the model
             A4Solution solution = TranslateAlloyToKodkod.execute_command(null, world.getAllReachableSigs(), world.getAllCommands().get(world.getAllCommands().size() - 1), options);
@@ -74,15 +77,25 @@ public class AlloyResult {
     public JSONArray convertToJSONArray(String alloyOutput) {
         JSONArray eventList = new JSONArray();
         Map<String, String> eventToIdMap = parseUserDefinedPredicates(alloyOutput);
+        
+        // Regex pattern to match state headers (with or without "(loop)")
+        Pattern statePattern = Pattern.compile("------State \\d+.*?-------");
+        Matcher matcher = statePattern.matcher(alloyOutput);
 
-        // Extract states from Alloy output
-        String[] states = alloyOutput.split("------State \\d+-------\n");
-        if (states.length == 0) {
+        List<Integer> stateIndices = new ArrayList<>();
+        while (matcher.find()) {
+            stateIndices.add(matcher.start()); // Store state start positions
+        }
+
+        if (stateIndices.isEmpty()) {
             System.out.println("No states found in Alloy output.");
             return eventList;
         }
 
-        String lastState = states[states.length - 1].trim();
+        // Get last state's position
+        int lastStateIndex = stateIndices.get(stateIndices.size() - 1);
+        String lastState = alloyOutput.substring(lastStateIndex).trim();
+
         System.out.println("Processing last state:\n" + lastState);
 
         // Build a map of events to dates for quick lookup

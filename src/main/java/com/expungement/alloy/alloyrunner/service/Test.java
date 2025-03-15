@@ -2,6 +2,7 @@ package com.expungement.alloy.alloyrunner.service;
 
 import org.json.JSONObject;
 
+
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import edu.mit.csail.sdg.parser.CompUtil;
 import edu.mit.csail.sdg.translator.A4Options;
 import edu.mit.csail.sdg.translator.A4Solution;
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
+import kodkod.engine.satlab.SATFactory;
 
 import java.util.regex.*;
 import java.util.*;
@@ -44,7 +46,7 @@ public class Test {
 
             // Options for the Alloy solver
             A4Options options = new A4Options();
-            options.solver = A4Options.SatSolver.SAT4J;
+            options.solver = SATFactory.get("minisat");
 
             // Execute the model
             A4Solution solution = TranslateAlloyToKodkod.execute_command(null, world.getAllReachableSigs(), world.getAllCommands().get(world.getAllCommands().size() - 1), options);
