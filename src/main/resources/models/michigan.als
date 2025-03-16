@@ -39,7 +39,6 @@ var sig sec1_1bViolations in Conviction { }
 var sig sec1_1cViolations in Conviction { }
 var sig sec1d_2Violations in Conviction { }
 var sig sec1dTimingViolations in Conviction { }
-var sig backwardWaitingViolations in Conviction { }
 var sig forwardWaitingViolations in Conviction { }
 
 -- initially, no past
@@ -198,10 +197,6 @@ fun waitingPeriod[c: Conviction]: Date->Date {
 	(c in Misdemeanor implies withinThree else withinFive)
 }
 
-pred backwardWaitingViolation[c: Conviction, x: Expungement] {
-	x.date in c.date.(c.waitingPeriod)
-}
-
 pred forwardWaitingViolation[c: Conviction] {
 	some c1: Conviction | c1.date in c.date.(c.waitingPeriod)
 }
@@ -253,13 +248,6 @@ fact {
         	implies sec1dTimingViolations' = sec1dTimingViolations + c
 		else sec1dTimingViolations' = sec1dTimingViolations
 	    )
-
-    -- Track violations for backward waiting period
-    always (all c: Conviction, x: Expungement | 
-        (x.date in c.date.(c.waitingPeriod))
-       		implies backwardWaitingViolations' = backwardWaitingViolations + c
-		else backwardWaitingViolations' = backwardWaitingViolations
-	)
 
     always(all c: Conviction | 
 	(some c1: Conviction | c1.date in c.date.(c.waitingPeriod))

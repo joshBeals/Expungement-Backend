@@ -1,5 +1,7 @@
 package com.expungement.alloy.alloyrunner.controller;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.json.JSONObject;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +43,10 @@ public class AlloyController {
     }
 	
 	@PostMapping("/evaluate")
-	public ResponseEntity<?> evaluateQuery(@RequestBody AlloyRequest request) {
-	    try {
-	    	JSONObject result = alloyResult.evaluateAlloyQuery(request.getPredicate(), request.getRun(), request.getType());
-            return ResponseEntity.ok(result.toString(4));
-	    } catch (Exception e) {
-	        return ResponseEntity.internalServerError().body("Failed to validate model: " + e.getMessage());
-	    }
-	}
+    public CompletableFuture<ResponseEntity<String>> evaluateQuery(@RequestBody AlloyRequest request) {
+        return alloyResult.evaluateAlloyQueryAsync(request.getPredicate(), request.getRun(), request.getType())
+                .thenApply(result -> ResponseEntity.ok(result.toString(4)))
+                .exceptionally(ex -> ResponseEntity.internalServerError().body("Failed to validate model: " + ex.getMessage()));
+    }
 
 }

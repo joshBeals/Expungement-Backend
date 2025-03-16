@@ -11,10 +11,12 @@ import edu.mit.csail.sdg.parser.CompUtil;
 import edu.mit.csail.sdg.translator.A4Options;
 import edu.mit.csail.sdg.translator.A4Solution;
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod;
+import jakarta.annotation.PostConstruct;
 import kodkod.engine.satlab.SATFactory;
 
 import java.util.regex.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -28,18 +30,31 @@ public class AlloyResult {
     @Value("${alloy.model.path2}")
     private String modelPath2 = "";
 
+    /**
+     * Asynchronous method to evaluate an Alloy query.
+     */
+    public CompletableFuture<JSONObject> evaluateAlloyQueryAsync(String predicate, String run, String type) {
+        return CompletableFuture.supplyAsync(() -> evaluateAlloyQuery(predicate, run, type));
+    }
+
     public JSONObject evaluateAlloyQuery(String predicate, String run, String type) {
         String modelContent;
-
+        
         String userPredicate = "\n\npred userDefinedPredicate {\n"
-                + predicate
-                + "}\n"
-                + run;
+        	    + predicate
+        	    + "}\n"
+        	    + run;
+        
         System.out.println(userPredicate);
 
         try {
             // Read the existing model from file
-            modelContent = new String(Files.readAllBytes(Paths.get(type.equals("forward") ? modelPath : modelPath2)));
+        	if(type.equals("forward")) {
+                modelContent = new String(Files.readAllBytes(Paths.get(modelPath)));
+        	}else {
+                modelContent = new String(Files.readAllBytes(Paths.get(modelPath2)));
+        	}
+            // Append the user-defined predicate at the end of the model
             modelContent += userPredicate;
 
             // Parse the modified Alloy model from string
@@ -47,8 +62,7 @@ public class AlloyResult {
 
             // Options for the Alloy solver
             A4Options options = new A4Options();
-            options.solver = SATFactory.get("sat4j");
-
+            options.solver = SATFactory.get("minisat");
 
             // Execute the model
             A4Solution solution = TranslateAlloyToKodkod.execute_command(null, world.getAllReachableSigs(), world.getAllCommands().get(world.getAllCommands().size() - 1), options);
@@ -78,22 +92,13 @@ public class AlloyResult {
         JSONArray eventList = new JSONArray();
         Map<String, String> eventToIdMap = parseUserDefinedPredicates(alloyOutput);
         
-        // Regex pattern to match state headers (with or without "(loop)")
-        Pattern statePattern = Pattern.compile("------State \\d+.*?-------");
-        Matcher matcher = statePattern.matcher(alloyOutput);
-
-        List<Integer> stateIndices = new ArrayList<>();
-        while (matcher.find()) {
-            stateIndices.add(matcher.start()); // Store state start positions
-        }
-
-        if (stateIndices.isEmpty()) {
+        int lastStateIndex = alloyOutput.lastIndexOf("------State ");
+        if (lastStateIndex == -1) {
             System.out.println("No states found in Alloy output.");
             return eventList;
         }
 
-        // Get last state's position
-        int lastStateIndex = stateIndices.get(stateIndices.size() - 1);
+        // Extract the last state directly
         String lastState = alloyOutput.substring(lastStateIndex).trim();
 
         System.out.println("Processing last state:\n" + lastState);

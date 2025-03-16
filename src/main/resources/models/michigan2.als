@@ -40,7 +40,6 @@ var sig sec1_1cViolations in Conviction { }
 var sig sec1d_2Violations in Conviction { }
 var sig sec1dTimingViolations in Conviction { }
 var sig backwardWaitingViolations in Conviction { }
-var sig forwardWaitingViolations in Conviction { }
 
 -- initially, no past
 fact {
@@ -202,10 +201,6 @@ pred backwardWaitingViolation[c: Conviction, x: Expungement] {
 	x.date in c.date.(c.waitingPeriod)
 }
 
-pred forwardWaitingViolation[c: Conviction] {
-	some c1: Conviction | c1.date in c.date.(c.waitingPeriod)
-}
-
 pred expungeable[c: Conviction] {
 	(c in Assaultive implies not sec1_1bViolation[c])
 	and (c in TenYearFelony implies not sec1_1cViolation[c])
@@ -259,11 +254,5 @@ fact {
         (x.date in c.date.(c.waitingPeriod))
        		implies backwardWaitingViolations' = backwardWaitingViolations + c
 		else backwardWaitingViolations' = backwardWaitingViolations
-	)
-
-    always(all c: Conviction | 
-	(some c1: Conviction | c1.date in c.date.(c.waitingPeriod))
-		implies forwardWaitingViolations' = forwardWaitingViolations + c
-		else forwardWaitingViolations' = forwardWaitingViolations
 	)
 }
