@@ -37,9 +37,10 @@ jobs:
             -DgroupId=org.alloytools -DartifactId=org.alloytools.alloy.cli -Dversion=6.2.0 -Dpackaging=jar
           mvn install:install-file -Dfile=src/main/resources/lib/org.alloytools.api-6.2.0.jar \
             -DgroupId=org.alloytools -DartifactId=org.alloytools.api -Dversion=6.2.0 -Dpackaging=jar
-      
-      - name: Build Project
-        run: mvn clean install -U
+          
+      # Compile the project
+      - name: Build JAR Package
+        run: mvn clean package
 
       # Log in to Docker Hub
       - name: Log in to Docker Hub

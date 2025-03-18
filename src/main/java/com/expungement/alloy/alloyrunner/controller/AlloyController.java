@@ -19,7 +19,6 @@ import com.expungement.alloy.alloyrunner.service.AlloyService;
 
 @RestController
 @RequestMapping("/api/alloy")
-@CrossOrigin(origins = "http://localhost:3000")
 public class AlloyController {
 
 	@GetMapping("/")
