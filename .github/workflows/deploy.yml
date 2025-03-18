@@ -21,8 +21,45 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      - name: Build with Maven
-        run: mvn clean package
+      - name: Install Alloy JARs Manually
+        run: |
+          mvn install:install-file \
+          -Dfile=src/main/resources/lib/org.alloytools.alloy.dist.jar \
+          -DgroupId=org.alloytools \
+          -DartifactId=alloy-dist \
+          -Dversion=6.2.0 \
+          -Dpackaging=jar
+
+          mvn install:install-file \
+          -Dfile=src/main/resources/lib/org.alloytools.alloy.application-6.2.0.jar \
+          -DgroupId=org.alloytools \
+          -DartifactId=alloy-application \
+          -Dversion=6.2.0 \
+          -Dpackaging=jar
+
+          mvn install:install-file \
+          -Dfile=src/main/resources/lib/org.alloytools.alloy.core-6.2.0.jar \
+          -DgroupId=org.alloytools \
+          -DartifactId=alloy-core \
+          -Dversion=6.2.0 \
+          -Dpackaging=jar
+
+          mvn install:install-file \
+          -Dfile=src/main/resources/lib/org.alloytools.alloy.extra-6.2.0.jar \
+          -DgroupId=org.alloytools \
+          -DartifactId=alloy-extra \
+          -Dversion=6.2.0 \
+          -Dpackaging=jar
+
+          mvn install:install-file \
+          -Dfile=src/main/resources/lib/org.alloytools.alloy.api-6.2.0.jar \
+          -DgroupId=org.alloytools \
+          -DartifactId=alloy-api \
+          -Dversion=6.2.0 \
+          -Dpackaging=jar
+
+      - name: Build Project
+        run: mvn clean install -U
 
       # Log in to Docker Hub
       - name: Log in to Docker Hub
