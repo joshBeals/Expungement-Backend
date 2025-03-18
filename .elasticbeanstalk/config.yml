@@ -1,0 +1,19 @@
+branch-defaults:
+  dev:
+    environment: Expungement-backend-env
+environment-defaults:
+  Expungement-backend-env:
+    branch: null
+    repository: null
+global:
+  application_name: expungement-backend
+  default_ec2_keyname: null
+  default_platform: Docker running on 64bit Amazon Linux 2023
+  default_region: us-east-1
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: null
+  sc: git
+  workspace_type: Application
