@@ -52,7 +52,7 @@ jobs:
           -Dpackaging=jar
 
           mvn install:install-file \
-          -Dfile=src/main/resources/lib/org.alloytools.alloy.api-6.2.0.jar \
+          -Dfile=src/main/resources/lib/org.alloytools.api-6.2.0.jar \
           -DgroupId=org.alloytools \
           -DartifactId=alloy-api \
           -Dversion=6.2.0 \
