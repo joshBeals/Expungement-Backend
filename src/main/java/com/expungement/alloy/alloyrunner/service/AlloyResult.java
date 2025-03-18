@@ -17,7 +17,10 @@ import kodkod.engine.satlab.SATFactory;
 import java.util.regex.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -48,12 +51,18 @@ public class AlloyResult {
         System.out.println(userPredicate);
 
         try {
-            // Read the existing model from file
-        	if(type.equals("forward")) {
-                modelContent = new String(Files.readAllBytes(Paths.get(modelPath)));
-        	}else {
-                modelContent = new String(Files.readAllBytes(Paths.get(modelPath2)));
-        	}
+        	// Load the Alloy model file from the classpath
+            String modelFilePath = type.equals("forward") ? "models/michigan.als" : "models/michigan2.als";
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream(modelFilePath);
+
+            // If the file is not found, throw an exception
+            if (inputStream == null) {
+                throw new FileNotFoundException("File " + modelFilePath + " not found in classpath");
+            }
+
+            // Read file content
+            modelContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            
             // Append the user-defined predicate at the end of the model
             modelContent += userPredicate;
 
