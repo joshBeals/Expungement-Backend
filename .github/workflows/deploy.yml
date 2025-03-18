@@ -1,0 +1,78 @@
+name: Deploy to ElasticBeanstalk
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Docker
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install Alloy dependencies manually
+        run: |
+          mvn install:install-file -Dfile=src/main/resources/lib/org.alloytools.alloy.dist.jar \
+            -DgroupId=org.alloytools -DartifactId=alloy -Dversion=6.2.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=src/main/resources/lib/org.alloytools.alloy.application-6.2.0.jar \
+            -DgroupId=org.alloytools -DartifactId=org.alloytools.alloy.application -Dversion=6.2.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=src/main/resources/lib/org.alloytools.alloy.core-6.2.0.jar \
+            -DgroupId=org.alloytools -DartifactId=org.alloytools.alloy.core -Dversion=6.2.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=src/main/resources/lib/org.alloytools.alloy.extra-6.2.0.jar \
+            -DgroupId=org.alloytools -DartifactId=org.alloytools.alloy.extra -Dversion=6.2.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=src/main/resources/lib/org.alloytools.alloy.lsp-6.2.0.jar \
+            -DgroupId=org.alloytools -DartifactId=org.alloytools.alloy.lsp -Dversion=6.2.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=src/main/resources/lib/org.alloytools.alloy.cli-6.2.0.jar \
+            -DgroupId=org.alloytools -DartifactId=org.alloytools.alloy.cli -Dversion=6.2.0 -Dpackaging=jar
+          mvn install:install-file -Dfile=src/main/resources/lib/org.alloytools.api-6.2.0.jar \
+            -DgroupId=org.alloytools -DartifactId=org.alloytools.api -Dversion=6.2.0 -Dpackaging=jar
+      
+      - name: Build Project
+        run: mvn clean install -U
+
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      # Build Docker image
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/expungement-backend:latest .
+
+      # Push Docker image to DockerHub
+      - name: Push Docker Image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/expungement-backend:latest
+
+  deploy:
+    name: Deploy to AWS Elastic Beanstalk
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Generate deployment package
+        run: zip -r deploy.zip Dockerrun.aws.json
+
+      - name: Deploy to AWS Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: expungement-backend  
+          environment_name: Expungement-backend-env  
+          existing_bucket_name: elasticbeanstalk-us-east-1-654654478160   
+          region: us-east-1
+          version_label: ${{ github.sha }}
+          deployment_package: deploy.zip
