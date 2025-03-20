@@ -20,6 +20,9 @@ import java.util.concurrent.CompletableFuture;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
 
 @Service
 public class AlloyResult {
@@ -48,11 +51,22 @@ public class AlloyResult {
 
         try {
             // Read the existing model from file
-        	if(type.equals("forward")) {
-                modelContent = new String(Files.readAllBytes(Paths.get(modelPath)));
-        	}else {
-                modelContent = new String(Files.readAllBytes(Paths.get(modelPath2)));
-        	}
+        	InputStream modelStream;
+            if (type.equals("forward")) {
+                modelStream = getClass().getClassLoader().getResourceAsStream("models/michigan.als");
+            } else {
+                modelStream = getClass().getClassLoader().getResourceAsStream("models/michigan2.als");
+            }
+
+            if (modelStream == null) {
+                System.err.println("ERROR: Model file not found inside JAR.");
+                return formatOutput(false, new JSONArray());
+            }
+
+            // Read file content from classpath
+            modelContent = new String(modelStream.readAllBytes(), StandardCharsets.UTF_8);
+            modelStream.close();
+
             // Append the user-defined predicate at the end of the model
             modelContent += userPredicate;
 
