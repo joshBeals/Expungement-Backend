@@ -2,8 +2,6 @@ package com.expungement.alloy.alloyrunner.service;
 
 import org.json.JSONObject;
 
-
-
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
